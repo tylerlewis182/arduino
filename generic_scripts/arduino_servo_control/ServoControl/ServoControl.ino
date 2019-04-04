@@ -111,7 +111,6 @@ void throttle_cb( const std_msgs::UInt16& msg){
 
 // throttle ROS subscriber and node handle
 ros::Subscriber<std_msgs::UInt16> throttle_sub("throttle_servo_position", &throttle_cb );
-//ros::NodeHandle  throttle_nh;
 
 /* ------------------------------------------------------------------------------------ */ 
 
@@ -163,12 +162,9 @@ void steering_cb( const std_msgs::UInt16& msg){
 
 // steering ROS subscriber and node handle
 ros::Subscriber<std_msgs::UInt16> steering_sub("steering_servo_position", &steering_cb );
-//ros::NodeHandle  steering_nh;
 
 /* ------------------------------------------------------------------------------------ */ 
 
-
-ros::NodeHandle nh;
 
 
 
@@ -212,8 +208,22 @@ void gear_falling() {
 /* ----------------------------------------------------------------------------------- */ 
 
 
+// create a ROS node handle
+ros::NodeHandle nh;
+
+
 // setup
 void setup() {
+
+  // set the servo out pins to OUTPUT (keeps them from floating and prevents the 'throttle jump 
+  // when steering stick is flicked' problem.
+  pinMode(throttle_pin_out, OUTPUT);
+  pinMode(steering_pin_out, OUTPUT);
+  pinMode(gear_pin_out, OUTPUT);
+
+  pinMode(throttle_pin_in, INPUT);
+  pinMode(steering_pin_in, INPUT);
+  pinMode(gear_pin_in, INPUT);
   
   // when pin D2 (throttle) goes high, call the rising function
   attachInterrupt(digitalPinToInterrupt(throttle_pin_in), throttle_rising, RISING);
@@ -225,15 +235,9 @@ void setup() {
   // attach servos to pins
   throttle.attach(throttle_pin_out);
   steering.attach(steering_pin_out);
-  //gear.attach(gear_pin_out);
+  gear.attach(gear_pin_out); // only useful if 'GEAR' channel controls a servo. 
 
-//  // init nodes and subscribe to topics
-//  steering_nh.initNode();
-//  steering_nh.subscribe(steering_sub);
-//
-//  throttle_nh.initNode();
-//  throttle_nh.subscribe(throttle_sub);
-
+  // initialize ROS nodes
   nh.initNode();
   nh.subscribe(steering_sub);
   nh.subscribe(throttle_sub);
@@ -242,6 +246,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
 
+  // Check (visually) that wheels turn left, then right, then straight anytime arduino is powered up
   sweep_steering();
 
 }
@@ -250,7 +255,7 @@ void setup() {
 // loop
 void loop()
 {
-  
+  // process callbacks
   nh.spinOnce();
   
   // write servo values
