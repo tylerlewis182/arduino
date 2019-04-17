@@ -21,7 +21,7 @@ public:
 	float magnetic_variation; // 020.3  (Magnetic Variation in degrees East or West)
 	char magnetic_variation_direction; // E  (Direction of Magnetic Variation, either E = East or W = West)
 	String provided_chk_hex; // 68  (Mandatory checksum, 0x68 (HEX, base16) == 104 (DEC, base10))
-	int provided_chk; // 104  (Mandatory checksum in DEC, base10)
+	//int provided_chk; // 104  (Mandatory checksum in DEC, base10)
 
 	bool valid; //  (this flag is false if the raw NMEA sentence does not start with '$' or end with '*XX')
 	bool checksums_match; 
@@ -49,7 +49,7 @@ public:
 		this->magnetic_variation = -1.0;
 		this->magnetic_variation_direction = '\0';
 		this->provided_chk_hex = "null";
-		this->provided_chk = -1;
+		//this->provided_chk = -1;
 
 		this->valid = false;
 		this->checksums_match = false;
@@ -74,7 +74,7 @@ public:
 		this->magnetic_variation = -1.0;
 		this->magnetic_variation_direction = '\0';
 		this->provided_chk_hex = "null";
-		this->provided_chk = -1;
+		//this->provided_chk = -1;
 
 		this->valid = false;
 		this->checksums_match = false;
@@ -102,7 +102,7 @@ public:
 			print(this->magnetic_variation);
 			print(this->magnetic_variation_direction);
 			print(this->provided_chk_hex);
-			print(this->provided_chk);
+			//print(this->provided_chk);
 			print(this->valid);
 			print(this->checksums_match);
 
@@ -159,18 +159,34 @@ public:
 		// make sure sentence starts with '$'
 		if(!s.charAt(0) == '$')
 		{
-			//print("Error! Sentence does not start with '$'");
+			print("Error! Sentence does not start with '$'");
 			this->valid = false;
 			return false;
 		}
 
-		// // make sure sentence ends with '*XX'
-		// if( (s.length() - s.indexOf('*')) != 3)
-		// {
-		// 	//print("Error! Sentence does not end with '*XX'");
-		// 	this->valid = false;
-		// 	return false;
-		// }
+		char last_char = '\0'; //s.charAt(s.length());
+		int last_char_int = (int) last_char;
+		// make sure sentence ends with '*XX'
+		Serial.println("###");
+		Serial.flush();
+		Serial.println(last_char_int); // 0
+		Serial.flush();
+		// Serial.println(s.length());
+		// Serial.flush();
+		// Serial.println(s.indexOf('*'));
+		// Serial.flush();
+		Serial.println("###");
+		Serial.flush();
+
+
+
+
+		if( (s.length() - s.indexOf('*')) != 4) // changed from 3!!! (nmea sentence ends in NUL character '\0'.  '\r' gets removed int GPS.h)
+		{
+			print("Error! Sentence does not end with '*XX'");
+			this->valid = false;
+			return false;
+		}
 		this->valid = true;
 		return true; 
 	}
@@ -178,14 +194,29 @@ public:
 
 
 	// checksum (calculates the checksum and compares it with the checksum sent from the satalite)
+	// nmea_checksum
 	bool checksum()
 	{
+		// make sure sentence starts with '$'
+		if(!s.startsWith("$"))
+		{
+			print("Error! Sentence does not start with '$'");
+			return false;
+		}
+
+		// make sure sentence ends with '*XX'
+		if( (s.length() - s.indexOf('*')) != 4) // changed from 3!!! (nmea sentence ends in NUL character '\0'.  '\r' gets removed int GPS.h)
+		{
+			print("Error! Sentence does not end with '*XX'");
+			return false;
+		}
+
 		// save the checksum that was provided at the end of the original NMEA sentence
-		provided_chk_hex = s.substring(s.indexOf('*') + 1); // 68 (String)
-		provided_chk = (int)strtol( &provided_chk_hex[0], NULL, 16); // 104 (int)
+		String provided_chk_str = s.substring(s.indexOf('*') + 1); // 60 (String)
+		int provided_chk = (int)strtol( &provided_chk_str[0], NULL, 16); // 96 (int)
 		
 		// preprocess NMEA sentence by removing '$' and '*XX'
-		String processed_s = s.substring(1, s.indexOf('*'));
+		s = s.substring(1, s.indexOf('*'));
 		
 		// running XOR calculation
 		int chk = 0;
@@ -200,17 +231,16 @@ public:
 		// compare the provided checksum with the calculated checksum
 		if(provided_chk == chk)
 		{
-			//print("Checksums match");
-			this->checksums_match = true;
+			print("Checksums match");
 			return true;
 		}
 		else 
 		{
-			//print("Checksums do NOT match");
-			this->checksums_match = false;
+			print("Checksums do NOT match");
 			return false;
 		}
 	}
+
 
 
 
@@ -256,7 +286,8 @@ public:
 		next_token(); // 225446
 		if(!token.length() == 0) 
 		{
-			time = token.toInt();
+			//time = token.toInt();
+			time = 123456;
 		}
 		else
 		{
@@ -395,21 +426,21 @@ public:
 
 
 
-		// store provided_chk_hex and provided_chk
-		if(provided_chk_hex == "null" || provided_chk == 0)
-		{
-			token = s.substring(end_index + 1, end_index + 3);
-			if(!token.length() == 0)
-			{
-				provided_chk_hex = token;
-				provided_chk = (int)strtol( &provided_chk_hex[0], NULL, 16); // 104 (int)
-			}
-			else
-			{
-				provided_chk_hex = "null";
-				provided_chk = -1;
-			}
-		}
+		// // store provided_chk_hex and provided_chk
+		// if(provided_chk_hex == "null" || provided_chk == 0)
+		// {
+		// 	token = s.substring(end_index + 1, end_index + 3);
+		// 	if(!token.length() == 0)
+		// 	{
+		// 		provided_chk_hex = token;
+		// 		provided_chk = (int)strtol( &provided_chk_hex[0], NULL, 16); // 104 (int)
+		// 	}
+		// 	else
+		// 	{
+		// 		provided_chk_hex = "null";
+		// 		provided_chk = -1;
+		// 	}
+		// }
 		//print(provided_chk_hex, true); // 68  (this is same as 0x68 (HEX, base16), which is same as 104 (DEC, base10))
 		//print(provided_chk, true);
 		
@@ -451,29 +482,41 @@ public:
 	}
 
 
-	// update
-	bool update(String new_sentence)
-	{
-		this->s = new_sentence; 
-		this->check_validity();
-		if(!this->valid)
-		{
-			return false;
-		}
+	// // update
+	// bool update(String new_sentence)
+	// {
+	// 	this->s = new_sentence;
 
-		this->checksum();
-		if(!this->checksums_match)
-		{
-			return false;
-		}
+	// 	bool is_valid = false; 
+	// 	is_valid = this->check_validity();
+	// 	if(!is_valid)
+	// 	{
+	// 		print("Error! NMEA sentence not valid.");
+	// 		return false;
+	// 	}
 
-		this->determine_type();
-		this->parse();
+	// 	bool checksums_matched = false;
+	// 	checksums_matched = this->checksum();
+	// 	if(!checksums_matched)
+	// 	{
+	// 		print("Error! Checksums don't match.");
+	// 		return false;
+	// 	}
 
-		return true;
+	// 	//this->determine_type();
+
+	// 	bool parsed_successfully = false;
+	// 	parsed_successfully = this->parse();
+	// 	if(!parsed_successfully)
+	// 	{
+	// 		print("Error! parse unsuccessful.");
+	// 		return false;
+	// 	}
+
+	// 	return true;
 
 
-	}
+	// }
 
 	
 };
