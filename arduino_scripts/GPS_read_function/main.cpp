@@ -43,49 +43,26 @@ int main()
 		gps.get_nmea_sentences(); // 75 MILLIseconds
 		//total_time = millis() - start_time;
 
-
+		bool ret = false;
 		// if both GPGGA and GPRMC sentences have been updated, update the two nmea objects
 		if(gps.updated) // 1 second (without printing)
 		{
+			// set the GPRMC sentence and type attributes
 			gprmc.s = gps.gprmc;
+			gprmc.type = "GPRMC";
 			
-			Serial.println(gps.gprmc);
-			Serial.flush();
-			Serial.println(gprmc.s);
-			Serial.flush();
+			// check if valid NMEA sentence, run checksum, and parse sentence
+			// gprmc.check_validity();
+			// gprmc.checksum();
+			// gprmc.parse();
+			gprmc.update();
 
-
-			bool ret = gprmc.check_validity();
-			Serial.println(ret);
-			Serial.flush();
-			Serial.println(gprmc.valid);
-			Serial.flush();
-
-			
-
-
-
-
-			ret = gprmc.checksum();
-			Serial.println(ret);
-			Serial.flush();
-
-
-			
-
-
-
-
+			// print GPRMC data
+			gprmc.print_data();
 			
 			print("---");
 			
-			//gpgga.update(gps.gpgga); // TODO: finish update() in nmea.h 
-			//gprmc.update(gps.gprmc); // 500 microseconds
 			
-			
-			print("---");
-			//print(gprmc.provided_chk_hex);
-			print("---");
 
 
 			
