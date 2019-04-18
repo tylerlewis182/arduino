@@ -39,16 +39,16 @@ public:
 		this->s = "null";
 		this->type = "null";
 		this->time = -1.0;
-		this->warning = '\0';
+		this->warning = '?';
 		this->latitude = -1.0;
-		this->latitude_direction = '\0';
+		this->latitude_direction = '?';
 		this->longitude = -1.0;
-		this->longitude_direction = '\0';
+		this->longitude_direction = '?';
 		this->smg = -1.0;
 		this->cmg = -1.0;
 		this->date = -1;
 		this->magnetic_variation = -1.0;
-		this->magnetic_variation_direction = '\0';
+		this->magnetic_variation_direction = '?';
 		this->provided_chk_hex = "null";
 		this->provided_chk = -1;
 
@@ -65,16 +65,16 @@ public:
 		this->s = s;
 		this->type = "null";
 		this->time = -1.0;
-		this->warning = '\0';
+		this->warning = '?';
 		this->latitude = -1.0;
-		this->latitude_direction = '\0';
+		this->latitude_direction = '?';
 		this->longitude = -1.0;
-		this->longitude_direction = '\0';
+		this->longitude_direction = '?';
 		this->smg = -1.0;
 		this->cmg = -1.0;
 		this->date = -1;
 		this->magnetic_variation = -1.0;
-		this->magnetic_variation_direction = '\0';
+		this->magnetic_variation_direction = '?';
 		this->provided_chk_hex = "null";
 		this->provided_chk = -1;
 
@@ -167,7 +167,7 @@ public:
 			return false;
 		}
 
-		char last_char = '\0'; //s.charAt(s.length());
+		char last_char = '?'; //s.charAt(s.length());
 		int last_char_int = (int) last_char;
 
 		// make sure sentence ends with '*XX'
@@ -277,7 +277,7 @@ public:
 		}
 		else
 		{
-			warning = '\0'; // could not determine warning
+			warning = '?'; // could not determine warning
 		}
 		
 
@@ -301,7 +301,7 @@ public:
 		}
 		else
 		{
-			latitude_direction = '\0';
+			latitude_direction = '?';
 		}
 		
 
@@ -325,7 +325,7 @@ public:
 		}
 		else
 		{
-			longitude_direction = '\0';
+			longitude_direction = '?';
 		}
 		
 
@@ -388,7 +388,7 @@ public:
 		}
 		else
 		{
-			magnetic_variation_direction = '\0';
+			magnetic_variation_direction = '?';
 		}
 		
 
