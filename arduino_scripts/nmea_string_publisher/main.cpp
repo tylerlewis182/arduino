@@ -35,8 +35,8 @@ void setup()
 {
 	init();
 	Serial.begin(57600);
-	Serial.println("Program started...");
-	Serial.println("---");
+	// Serial.println("Program started...");
+	// Serial.println("---");
 	delay(1000);
 
 	nh.initNode();

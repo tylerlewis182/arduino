@@ -35,6 +35,21 @@ NOTES:
 
     Issue1-FIX: Make sure the steering servo and the throttle servo(esc) 
                 are using seperate 5V signal power sources.
+    ---
+
+    Issue2: Creating a GPS object caused Devo AX701 Receiver to beeb 
+            constantly. Program would compile and upload, but not function
+            properly.
+
+    Issue2-FIX: Calling 'delay(10);' after sending configuration commands
+                to the Adafruit GPS board, for example: 
+
+                  GPSSerial.println(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+
+                was causing the error. Remove the delay entirely and 
+                adding GPSSerial.flush(); after command is sent solved the
+                problem.
+
 
 ------------------------------------------------------------------------
 
@@ -77,131 +92,14 @@ To run:
 #include <ros.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/String.h>
-//#include "GPS.h"
-
-/* begin debugging GPS gps; problem */
-#define PMTK_SET_NMEA_OUTPUT_RMCGGA "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28"   ///< turn on GPRMC and GGA
-#define PMTK_SET_NMEA_OUTPUT_ALLDATA "$PMTK314,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0*28"  ///< turn on ALL THE DATA
-#define PGCMD_NOANTENNA "$PGCMD,33,0*6D" // turn off antenna status 
-
-#define GPSSerial Serial3
-
-// -- ok so far...
-
-class GPS
-{
-public:
-
-  // variables
-  long baud; // bits per second
-  int timeout;     // milliseconds (may need to increase this if data is dropped)
-  int num_chars;  // this should be the max number of chars in a NMEA sentence
-  String empty_string = "";
-  String line = "";   // stores the most recent line of data read from serial
-  String gpgga = "";  // holds last GPGGA nmea sentence
-  String gprmc = "";  // holds last GPRMC nmea sentence
-  bool gpgga_updated = false;
-  bool gprmc_updated = false;
-  bool updated = false;
-
-
-
-  // // constructor
-  // GPS(long baud=9600, int timeout=100)
-  // {
-  //   this->baud = baud;
-  //   this->timeout = timeout;
-  //   this->num_chars = 512;
-  //   this->line = "";
-  //   this->gpgga = "";
-  //   this->gprmc = "";
-    
-  //   // initialize serial communication with the GPS
-  //   GPSSerial.begin(baud);
-
-  //   // set the timeout for gps serial
-  //   GPSSerial.setTimeout(timeout); // default, if this line commented out, is 1000 milliseconds
-  
-  //   // set gps to only output RMC and GGA lines
-  //   GPSSerial.println(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  //   delay(10);
-
-  //   // turn off printing antennae status
-  //   GPSSerial.println(PGCMD_NOANTENNA);
-  //   delay(10);
-
-  //   // reserve space for strings
-  //   this->line.reserve(num_chars); 
-  //   this->gprmc.reserve(num_chars);
-  // }
-
-  GPS(long baud=9600, int timeout=100)
-  {
-    ;
-  }
-
-  // get nmea sentences
-  bool get_nmea_sentences()
-  {
-    updated = false; // reset flag
-    int num_nmea_sentences = 0;
-    if(GPSSerial.available() > 0)
-    {
-      line = GPSSerial.readStringUntil('\n');
-      if(line.startsWith("$GPGGA"))
-      {
-        line.remove(line.length(), 1); // remove the '\r'. Used to be: *XX\r\0, is now: *XX\0
-        gpgga = line;
-        gpgga_updated = true;
-      }
-      else if(line.startsWith("$GPRMC"))
-      {
-        line.remove(line.length(), 1); // remove the '\r'. Used to be: *XX\r\0, is now: *XX\0
-        gprmc = line;
-        gprmc_updated = true;
-      }
-
-      // check if both nmea sentences have been updated
-      if(gpgga_updated && gprmc_updated)
-      {
-        updated = true; // set flag
-        gpgga_updated = false; // reset flag
-        gprmc_updated = false; // reset flag
-        return true;
-      }
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-
-  // // print all member variables
-  // print()
-  // {
-  //  Serial.println("print function called...");
-  //  Serial.flush();
-  // }
-
-};
-
-
-GPS gps;
-
-
-
-
-
-
-/* end debugging GPS gps; problem */
+#include "GPS.h"
 
 
 // create a ROS node handle
 ros::NodeHandle nh;
 
 // create a GPS object
-//GPS gps;
+GPS gps;
 
 
 // function prototypes
@@ -360,10 +258,6 @@ ros::Publisher chatter("chatter", &str_msg);
 //char hello[13] = "hello world!";
 String message = "$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68\r";
 
-// $GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68
-
-
-
 /* ----------------------------------------------------------------------------------- */ 
 
 
@@ -409,38 +303,8 @@ void setup() {
   // Check (visually) that wheels turn left, then right, then straight anytime arduino is powered up
   sweep_steering();
 
-  /* begin debugging GPS gps; 1 */
-
-
-    gps.baud = 9600;
-    gps.timeout = 100;
-    gps.num_chars = 512;
-    gps.line = "";
-    gps.gpgga = "";
-    gps.gprmc = "";
-    
-    // initialize serial communication with the GPS
-    GPSSerial.begin(gps.baud);
-
-    // set the timeout for gps serial
-    GPSSerial.setTimeout(gps.timeout); // default, if this line commented out, is 1000 milliseconds
-  
-
-    // set gps to only output RMC and GGA lines
-    GPSSerial.println(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-    delay(10);
-
-    // turn off printing antennae status
-    GPSSerial.println(PGCMD_NOANTENNA);
-    delay(10);
-
-
-    // reserve space for strings
-    gps.line.reserve(gps.num_chars); 
-    gps.gprmc.reserve(gps.num_chars);
-  /* end debugging GPS gps; 1 */
-
 }
+
 
 
 // main
@@ -462,8 +326,7 @@ int main()
 
 
     // process callbacks
-    //nh.spinOnce();
-
+    nh.spinOnce();
 
     
     // write servo values
