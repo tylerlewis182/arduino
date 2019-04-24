@@ -253,10 +253,13 @@ void gear_falling() {
 
 /* ------------------------------------------- GPS ----------------------------------- */ 
 
-std_msgs::String str_msg;
-ros::Publisher chatter("chatter", &str_msg);
-//char hello[13] = "hello world!";
-String message = "$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68\r";
+// gprmc
+std_msgs::String gprmc_msg;
+ros::Publisher gprmc_pub("gprmc", &gprmc_msg);
+
+// gpgga
+std_msgs::String gpgga_msg;
+ros::Publisher gpgga_pub("gpgga", &gpgga_msg);
 
 /* ----------------------------------------------------------------------------------- */ 
 
@@ -294,7 +297,8 @@ void setup() {
   nh.initNode();
   nh.subscribe(steering_sub);
   nh.subscribe(throttle_sub);
-  nh.advertise(chatter);
+  nh.advertise(gprmc_pub);
+  nh.advertise(gpgga_pub);
 
   // LED ON == autonomous mode. LED OFF == manual mode
   pinMode(LED_BUILTIN, OUTPUT);
@@ -317,16 +321,21 @@ int main()
     gps.get_nmea_sentences();
     if(gps.updated)
     {
-      message = gps.gprmc;
-      str_msg.data = message.c_str();
-      chatter.publish( &str_msg );
-      nh.spinOnce();
+      // publish GPRMC sentence to the 'gprmc' topic
+      gprmc_msg.data = gps.gprmc.c_str();
+      gprmc_pub.publish(&gprmc_msg);
+
+      // process callbacks
+      nh.spinOnce(); 
+
+      // publish GPGGA sentence to the 'gprmc' topic
+      gpgga_msg.data = gps.gpgga.c_str();
+      gpgga_pub.publish(&gpgga_msg);
+
+      // process callbacks
+      nh.spinOnce(); 
     }
     
-
-
-    // process callbacks
-    nh.spinOnce();
 
     
     // write servo values
@@ -343,7 +352,10 @@ int main()
       digitalWrite(LED_BUILTIN, LOW);
       throttle.writeMicroseconds(throttle_pwm_value_manual);
       steering.writeMicroseconds(steering_pwm_value_manual);
-    } 
+    }
+
+    // process callbacks
+    nh.spinOnce(); 
   }
 }
 
