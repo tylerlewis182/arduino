@@ -82,8 +82,8 @@
 
 #define GPSSerial Serial3
 
-// -- ok so far...
 
+// GPS
 class GPS
 {
 public:
@@ -147,13 +147,13 @@ public:
       line = GPSSerial.readStringUntil('\n');
       if(line.startsWith("$GPGGA"))
       {
-        line.remove(line.length(), 1); // remove the '\r'. Used to be: *XX\r\0, is now: *XX\0
+        line.trim(); // remove the '\r'. Used to be: *XX\r\0, is now: *XX\0
         gpgga = line;
         gpgga_updated = true;
       }
       else if(line.startsWith("$GPRMC"))
       {
-        line.remove(line.length(), 1); // remove the '\r'. Used to be: *XX\r\0, is now: *XX\0
+        line.trim(); // remove the '\r'. Used to be: *XX\r\0, is now: *XX\0
         gprmc = line;
         gprmc_updated = true;
       }
